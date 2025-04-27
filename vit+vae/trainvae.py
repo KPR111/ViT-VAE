@@ -1,6 +1,8 @@
 # Import
 import tensorflow as tf
 from tensorflow.keras import Model
+import os
+from tensorflow.keras.callbacks import ModelCheckpoint
 
 from models.vae_models import build_encoder, build_decoder
 from loadingpreprocessing import train_generator, val_generator
@@ -74,11 +76,38 @@ class VAE(Model):
 vae = VAE(encoder, decoder)
 vae.compile(optimizer=tf.keras.optimizers.Adam(learning_rate=1e-4))
 
+# Create directories for saving weights if they don't exist
+checkpoint_dir = "checkpoints/vae"
+final_model_dir = "saved_models"
+os.makedirs(checkpoint_dir, exist_ok=True)
+os.makedirs(final_model_dir, exist_ok=True)
+
+# Create checkpoint callback
+checkpoint_path = os.path.join(checkpoint_dir, "vae_weights_epoch_{epoch:02d}.h5")
+checkpoint_callback = ModelCheckpoint(
+    filepath=checkpoint_path,
+    save_weights_only=True,
+    save_freq='epoch',  # save every epoch
+    verbose=1
+)
+
 # Training VAE
 vae.fit(
     train_generator,
     epochs=15,  # You can increase later
-    validation_data=val_generator
+    validation_data=val_generator,
+    callbacks=[checkpoint_callback]
 )
+
+# Save the final model weights
+final_weights_path = os.path.join(final_model_dir, "vae_final_weights.h5")
+vae.save_weights(final_weights_path)
+print(f"Final weights saved to {final_weights_path}")
+
+# Optional: Save the entire model (architecture + weights)
+final_model_path = os.path.join(final_model_dir, "vae_complete_model")
+vae.save(final_model_path)
+print(f"Complete model saved to {final_model_path}")
+
 
 
