@@ -1,7 +1,0 @@
-conda create -n tf_gpu_env python=3.9
-
-
-conda activate tf_gpu_env
-
-
-conda deactivate

@@ -1,182 +1,326 @@
 # Hybrid VAE-ViT Model for Plant Disease Classification
 
-## Problem Statement
+## Overview
 
-Plant diseases cause significant economic losses in agriculture worldwide. Early and accurate detection of plant diseases is crucial for effective disease management and to minimize crop losses. Traditional methods of plant disease detection rely on visual inspection by experts, which is time-consuming, subjective, and often requires specialized knowledge.
+This project implements a hybrid deep learning architecture that combines Variational Autoencoders (VAE) and Vision Transformers (ViT) for plant disease classification. The model leverages the VAE's ability to learn compact latent representations of plant leaf images and the ViT's capability to model long-range dependencies through self-attention mechanisms.
 
-This project addresses the challenge of automated plant disease detection using a novel hybrid deep learning approach that combines the strengths of Variational Autoencoders (VAE) and Vision Transformers (ViT).
+Plant diseases cause significant economic losses in agriculture worldwide. Early and accurate detection is crucial for effective disease management. This hybrid approach aims to provide an efficient and accurate solution for automated plant disease detection.
 
-## Project Overview
+## Installation
 
-This project implements a hybrid deep learning architecture that combines:
+### Prerequisites
 
-1. **Variational Autoencoder (VAE)**: For efficient feature extraction and dimensionality reduction
-2. **Vision Transformer (ViT)**: For powerful classification capabilities using attention mechanisms
+- Python 3.8+
+- TensorFlow 2.x
+- CUDA-compatible GPU (recommended for training)
+- CUDA and cuDNN installed (for GPU acceleration)
+- Minimum 8GB RAM (16GB+ recommended for training)
+- Storage space for the dataset (~2GB)
 
-The hybrid model leverages the VAE's ability to learn a compact latent representation of plant leaf images and the ViT's capability to model long-range dependencies in the data through self-attention mechanisms.
+### Environment Setup
 
-## Why This Approach?
+1. Clone the repository:
+   ```bash
+   git clone <repository-url>
+   cd vit+vae
+   ```
 
-### Advantages of the Hybrid VAE-ViT Architecture
+2. Create a virtual environment (optional but recommended):
+   ```bash
+   # Using conda
+   conda create -n vae-vit python=3.8
+   conda activate vae-vit
 
-1. **Efficient Feature Extraction**: The VAE compresses the high-dimensional image data into a lower-dimensional latent space, capturing the most important features while reducing computational requirements.
+   # OR using venv
+   python -m venv vae-vit-env
+   # On Windows
+   vae-vit-env\Scripts\activate
+   # On Linux/Mac
+   source vae-vit-env/bin/activate
+   ```
 
-2. **Robust to Variations**: The VAE's probabilistic nature helps the model generalize better across different lighting conditions, angles, and other variations in leaf images.
+3. Install dependencies:
+   ```bash
+   pip install -r requirements.txt
+   ```
 
-3. **Attention-Based Classification**: The Vision Transformer excels at capturing global dependencies in the data, allowing it to focus on the most relevant parts of the latent representation for disease classification.
+4. Verify GPU availability (optional):
+   ```bash
+   python -c "import tensorflow as tf; print('GPU Available:', tf.config.list_physical_devices('GPU'))"
+   ```
 
-4. **Transfer Learning Potential**: The modular architecture allows for pre-training components separately and fine-tuning the complete model, enhancing performance with limited data.
+5. Configure data paths:
+   - Open `config/model_config.py`
+   - Update the `TRAIN_DIR`, `VALID_DIR`, and `TEST_DIR` paths to point to your dataset
 
-5. **Interpretability**: The attention mechanisms in the ViT component can potentially highlight which parts of the latent representation are most important for classification decisions.
+## Project Structure
 
-## Architecture Details
+```
+vit+vae/
+├── config/                  # Configuration files
+│   └── model_config.py      # Model and training parameters
+├── data/                    # Data handling code
+│   └── data_loader.py       # Data loading and preprocessing
+├── models/                  # Model definitions
+│   ├── vae.py               # VAE model
+│   ├── vit.py               # Vision Transformer model
+│   └── hybrid.py            # Hybrid model combining VAE and ViT
+├── training/                # Training scripts
+│   ├── train_vae.py         # VAE training script
+│   └── train_hybrid.py      # Hybrid model training script
+├── inference/               # Inference scripts
+│   ├── inference.py         # Single image inference
+│   └── batch_inference.py   # Batch inference for multiple images
+├── utils/                   # Utility functions
+│   ├── model_utils.py       # Model loading utilities
+│   └── visualization.py     # Visualization utilities
+├── saved_models/            # Saved model weights
+│   ├── vae/                 # VAE model weights
+│   └── hybrid/              # Hybrid model weights
+├── checkpoints/             # Training checkpoints
+├── inference_results/       # Results from inference
+├── main.py                  # Main entry point
+├── requirements.txt         # Project dependencies
+└── README.md                # This file
+```
 
-### Model Components
+## How to Run the Project
 
-#### 1. VAE Encoder
-- Input: RGB images of size 224×224×3
-- Architecture:
-  - Conv2D layer: 32 filters, 3×3 kernel, stride 2, 'same' padding, ReLU activation
-  - Conv2D layer: 64 filters, 3×3 kernel, stride 2, 'same' padding, ReLU activation
-  - Flatten layer
-  - Dense layer: 128 units, ReLU activation
-  - Two parallel Dense layers for z_mean and z_log_var (256 units each)
-  - Sampling layer using the reparameterization trick
-- Output: 256-dimensional latent vector
+The project uses a command-line interface through `main.py` for all operations. Before running any commands, make sure you have configured the data paths in `config/model_config.py`.
 
-#### 2. VAE Decoder (used only during VAE training)
-- Input: 256-dimensional latent vector
-- Architecture:
-  - Dense layer: 56×56×32 units, ReLU activation
-  - Reshape to 56×56×32
-  - Conv2DTranspose layer: 32 filters, 3×3 kernel, stride 2, 'same' padding, ReLU activation
-  - Conv2DTranspose layer: 16 filters, 3×3 kernel, stride 2, 'same' padding, ReLU activation
-  - Conv2DTranspose layer: 3 filters, 3×3 kernel, 'same' padding, sigmoid activation
-- Output: Reconstructed RGB image of size 224×224×3
+### Complete Training Pipeline
 
-#### 3. Vision Transformer (ViT)
-- Input: 256-dimensional latent vector from VAE encoder
-- Architecture:
-  - Dense expansion layer: 256 units
-  - Reshape to 16 patches of size 16 (16×16=256)
-  - 4 Transformer encoder blocks, each containing:
-    - Layer normalization
-    - Multi-head self-attention (4 heads, key dimension 16)
-    - Skip connection
-    - Layer normalization
-    - MLP block with GELU activation
-    - Skip connection
-  - Final layer normalization
-  - Flatten layer
-  - Dropout (0.3)
-  - Dense layer: 38 units (number of classes), softmax activation
-- Output: Probability distribution over 38 plant disease classes
+The training process consists of two sequential steps:
 
-#### 4. Hybrid Model
-- The VAE encoder and ViT are combined into a single end-to-end model
-- During training, the VAE encoder weights are frozen (transfer learning)
-- Only the ViT component is trained on the plant disease classification task
+1. First, train the VAE to learn a good latent representation
+2. Then, train the hybrid model using the pre-trained VAE encoder
 
-## Dimension Changes Throughout the Architecture
+### Step 1: Training the VAE
 
-### VAE Encoder
-1. Input: 224×224×3 = 150,528 dimensions
-2. First Conv2D: 112×112×32 = 401,408 dimensions
-3. Second Conv2D: 56×56×64 = 200,704 dimensions
-4. Flatten: 200,704 dimensions
-5. Dense: 128 dimensions
-6. z_mean and z_log_var: 256 dimensions each
-7. Latent vector z: 256 dimensions
+```bash
+# Navigate to the project directory
+cd vit+vae
 
-### Vision Transformer
-1. Input: 256-dimensional latent vector
-2. Dense expansion: 256 dimensions
-3. Reshape to patches: 16 patches × 16 dimensions
-4. Transformer blocks: Maintain 16×16 dimensions through self-attention and MLP operations
-5. Flatten: 256 dimensions
-6. Output layer: 38 dimensions (class probabilities)
+# Train the VAE for 10 epochs (adjust as needed)
+python main.py train-vae --epochs 10
+```
 
-## Learnable Parameters Count
+During VAE training:
+- The model will learn to encode and decode plant leaf images
+- Checkpoints will be saved in `checkpoints/vae/`
+- Final weights will be saved in `saved_models/vae/`
+- Progress will be displayed with loss metrics
 
-### VAE Encoder
-- First Conv2D: (3×3×3×32) + 32 = 896 parameters
-- Second Conv2D: (3×3×32×64) + 64 = 18,496 parameters
-- Dense: (200,704×128) + 128 = 25,690,240 parameters
-- z_mean: (128×256) + 256 = 33,024 parameters
-- z_log_var: (128×256) + 256 = 33,024 parameters
-- Total VAE Encoder: ~25.78 million parameters
+### Step 2: Training the Hybrid Model
 
-### Vision Transformer
-- Dense expansion: (256×256) + 256 = 65,792 parameters
-- Each Transformer block:
-  - Multi-head attention: ~16,640 parameters
-  - MLP: ~4,368 parameters
-  - Layer norms: ~64 parameters
-  - Total per block: ~21,072 parameters
-- 4 Transformer blocks: 4 × 21,072 = 84,288 parameters
-- Final layer norm: 512 parameters
-- Output layer: (256×38) + 38 = 9,766 parameters
-- Total ViT: ~160,358 parameters
+After the VAE training is complete, train the hybrid model:
 
-### Total Hybrid Model
-- VAE Encoder: ~25.78 million parameters (frozen during hybrid training)
-- Vision Transformer: ~160,358 parameters (trainable)
-- Total: ~25.94 million parameters (only ~160,358 trainable)
+```bash
+# Train the hybrid model for 10 epochs (adjust as needed)
+python main.py train-hybrid --epochs 10
+```
 
-## Training Process
+During hybrid model training:
+- The pre-trained VAE encoder weights will be loaded and frozen
+- Only the Vision Transformer component will be trained
+- Checkpoints will be saved in `checkpoints/hybrid/`
+- Final weights will be saved in `saved_models/hybrid/`
+- Training metrics (accuracy, loss) will be displayed
 
-The training process is divided into two phases:
+### Testing and Evaluation
 
-### Phase 1: VAE Training
-1. The VAE is trained as an autoencoder to reconstruct plant leaf images
-2. Loss function combines reconstruction loss (MSE) and KL divergence
-3. Adam optimizer with learning rate 1e-4
-4. Checkpoints saved during training
-5. Final weights saved for encoder and decoder separately
+#### Single Image Inference
 
-### Phase 2: Hybrid Model Training
-1. Pre-trained VAE encoder weights are loaded and frozen
-2. ViT classifier is initialized with random weights
-3. The hybrid model is trained on the plant disease classification task
-4. Loss function: Categorical cross-entropy
-5. Adam optimizer with learning rate 1e-4
-6. Early stopping based on validation loss
-7. Checkpoints saved during training
-8. Final hybrid model weights saved
+To classify a single plant leaf image:
 
-## Dataset
+```bash
+# Basic inference
+python main.py inference --image path/to/your/image.jpg
 
-The model is trained on the "New Plant Diseases Dataset," which contains images of healthy and diseased plant leaves across various crops. The dataset includes:
+# Specify a custom directory to save results
+python main.py inference --image path/to/your/image.jpg --save_dir custom_results
+```
+
+This will:
+1. Load the trained hybrid model
+2. Process the specified image
+3. Predict the plant disease class with confidence score
+4. Display and save a visualization with the prediction
+5. Print inference time and other metrics
+
+#### Batch Testing on Multiple Images
+
+To run inference on a directory of images:
+
+```bash
+# Basic batch inference
+python main.py batch --input_dir path/to/images --output_dir batch_results
+
+# With additional options
+python main.py batch --input_dir path/to/images --output_dir batch_results --batch_size 32 --visualize
+```
+
+This will:
+1. Process all images in the input directory
+2. Generate predictions for each image
+3. Save results to a CSV file in the output directory
+4. Calculate and display average inference time
+5. Optionally generate visualizations if `--visualize` is specified
+
+### Example Workflow
+
+Here's a complete example workflow:
+
+```bash
+# 1. Configure data paths in config/model_config.py
+
+# 2. Train the VAE
+python main.py train-vae --epochs 20
+
+# 3. Train the hybrid model
+python main.py train-hybrid --epochs 30
+
+# 4. Run inference on a test image
+python main.py inference --image C:/Users/Prudvi/Downloads/archive/test/test/Apple___Apple_scab/0a5e9323-dbad-432d-ac58-d291718345d9___FREC_Scab 3417.JPG
+
+# 5. Run batch inference on a test directory
+python main.py batch --input_dir C:/Users/Prudvi/Downloads/archive/test/test --output_dir test_results --visualize
+```
+
+### Monitoring and Visualization
+
+- Training progress is displayed in the console
+- Model checkpoints are saved at regular intervals
+- Inference results include visualizations of the predictions
+- Batch inference results are saved in CSV format for further analysis
+
+## Model Architecture
+
+The hybrid architecture consists of two main components:
+
+### 1. Variational Autoencoder (VAE)
+- **Encoder**: Compresses 224×224×3 RGB images into a 256-dimensional latent space
+- **Decoder**: Reconstructs images from the latent space (used only during VAE training)
+
+### 2. Vision Transformer (ViT)
+- Takes the 256-dimensional latent vector from the VAE encoder
+- Processes it through transformer blocks with self-attention mechanisms
+- Outputs a probability distribution over 38 plant disease classes
+
+## Dataset and Data Preparation
+
+### Dataset Information
+
+The model is trained on the "New Plant Diseases Dataset," which contains images of healthy and diseased plant leaves across various crops:
 - 38 classes (different plant diseases and healthy plants)
 - Images are resized to 224×224 pixels
-- Data augmentation applied during training (horizontal flips, rotation, zoom)
+- Data augmentation is applied during training
 
-## Potential Improvements
+### Data Preparation
 
-Several strategies could be employed to enhance the current architecture:
+1. **Download the Dataset**:
+   - The dataset can be downloaded from [Kaggle](https://www.kaggle.com/datasets/vipoooool/new-plant-diseases-dataset)
+   - Extract the downloaded archive to a location on your computer
 
-1. **Deeper VAE**: Adding more convolutional layers to the VAE encoder could improve feature extraction capabilities.
+2. **Configure Data Paths**:
+   - Open `config/model_config.py`
+   - Update the following paths to point to your dataset:
+     ```python
+     TRAIN_DIR = "path/to/New Plant Diseases Dataset(Augmented)/train"
+     VALID_DIR = "path/to/New Plant Diseases Dataset(Augmented)/valid"
+     TEST_DIR = "path/to/test/test"
+     ```
 
-2. **Larger Latent Space**: Increasing the dimensionality of the latent space might preserve more information, potentially improving classification accuracy.
+3. **Data Structure**:
+   The dataset should have the following structure:
+   ```
+   train/
+   ├── Apple___Apple_scab/
+   ├── Apple___Black_rot/
+   ├── Apple___Cedar_apple_rust/
+   └── ... (other classes)
 
-3. **More Transformer Layers**: Adding more transformer blocks could enhance the model's ability to capture complex patterns in the latent representation.
+   valid/
+   ├── Apple___Apple_scab/
+   ├── Apple___Black_rot/
+   ├── Apple___Cedar_apple_rust/
+   └── ... (other classes)
 
-4. **Attention Visualization**: Implementing mechanisms to visualize attention weights could improve interpretability.
+   test/
+   ├── Apple___Apple_scab/
+   ├── Apple___Black_rot/
+   ├── Apple___Cedar_apple_rust/
+   └── ... (other classes)
+   ```
 
-5. **Fine-tuning Strategy**: Instead of completely freezing the VAE encoder, implementing a gradual unfreezing strategy during training might improve performance.
+4. **Data Preprocessing**:
+   - Images are automatically resized to 224×224 pixels during loading
+   - Pixel values are normalized to the range [0, 1]
+   - Data augmentation (horizontal flips, rotation, zoom) is applied during training
 
-6. **Ensemble Approach**: Combining predictions from multiple models (e.g., CNN-based and hybrid models) could enhance robustness.
+## Performance
 
-7. **Self-supervised Pre-training**: Pre-training the VAE on a larger dataset of plant images before fine-tuning on the disease classification task.
+The hybrid VAE-ViT model achieves competitive accuracy on plant disease classification tasks while being computationally efficient due to the dimensionality reduction provided by the VAE.
 
-8. **Hyperparameter Optimization**: Systematic tuning of hyperparameters like learning rate, batch size, and model architecture.
+## Future Improvements
 
-9. **Knowledge Distillation**: Training a smaller, more efficient model to mimic the behavior of the larger hybrid model.
+- Deeper VAE architecture for better feature extraction
+- More transformer layers for enhanced pattern recognition
+- Attention visualization for improved interpretability
+- Gradual unfreezing of the VAE encoder during training
+- Ensemble approaches for increased robustness
 
-10. **Explainability Methods**: Incorporating techniques like Grad-CAM to highlight regions of the input image that influenced the classification decision.
+## Troubleshooting
 
-## Conclusion
+### Common Issues and Solutions
 
-This hybrid VAE-ViT architecture represents a novel approach to plant disease classification that leverages the strengths of both variational autoencoders and vision transformers. By first compressing the image information into a meaningful latent space and then applying transformer-based attention mechanisms, the model can efficiently and effectively classify plant diseases from leaf images.
+#### Model Loading Issues
+- **Problem**: `Could not load VAE encoder weights` or `Could not find model weights in any of the expected locations`
+- **Solution**:
+  - Ensure you've completed the VAE training step before training the hybrid model
+  - Check that all model weights are in the correct directories:
+    - VAE weights should be in `saved_models/vae/`
+    - Hybrid model weights should be in `saved_models/hybrid/`
+  - If weights are missing, run the training process again
 
-The modular nature of the architecture allows for flexible experimentation and improvement, making it a promising approach for agricultural applications and potentially other image classification tasks where both feature extraction and attention mechanisms are beneficial.
+#### GPU/Memory Issues
+- **Problem**: `CUDA out of memory` or training is very slow
+- **Solution**:
+  - Reduce batch size in `config/model_config.py` (try 16 or 8)
+  - Close other GPU-intensive applications
+  - If using CPU only, expect significantly longer training times
+  - Consider using Google Colab or another cloud service with GPU access
+
+#### Data Loading Issues
+- **Problem**: `No such file or directory` or `Found 0 images belonging to 0 classes`
+- **Solution**:
+  - Double-check the data paths in `config/model_config.py`
+  - Ensure the dataset is downloaded and extracted correctly
+  - Verify the dataset directory structure matches the expected format
+
+#### Dependency Issues
+- **Problem**: `ModuleNotFoundError` or `ImportError`
+- **Solution**:
+  - Ensure all packages in `requirements.txt` are installed:
+    ```bash
+    pip install -r requirements.txt
+    ```
+  - Check for version conflicts between packages
+  - Try creating a fresh virtual environment
+
+#### Inference Issues
+- **Problem**: Poor prediction results or unexpected outputs
+- **Solution**:
+  - Verify that both VAE and hybrid model were trained properly
+  - Check that the input image format matches the expected format (224×224 RGB)
+  - Try running inference on known test images from the dataset first
+  - Increase the number of training epochs if accuracy is low
+
+## License
+
+[Specify your license here]
+
+## Acknowledgments
+
+- The New Plant Diseases Dataset creators
+- TensorFlow and Keras development teams
