@@ -1,8 +1,6 @@
 tensorflow==2.19.0
 tensorflow-estimator==2.10.0
 tensorflow-io-gcs-filesystem==0.31.0
-numpy
-Pillow
-matplotlib
-scikit-learn
-pandas
+numpy==1.26.4
+Pillow==11.2.1
+matplotlib==3.9.4

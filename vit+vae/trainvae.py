@@ -76,38 +76,36 @@ class VAE(Model):
 vae = VAE(encoder, decoder)
 vae.compile(optimizer=tf.keras.optimizers.Adam(learning_rate=1e-4))
 
-# Create directories for saving weights if they don't exist
-checkpoint_dir = "checkpoints/vae"
-final_model_dir = "saved_models"
-os.makedirs(checkpoint_dir, exist_ok=True)
-os.makedirs(final_model_dir, exist_ok=True)
+# Create directories for saving weights
+os.makedirs("saved_models/vae", exist_ok=True)
+os.makedirs("checkpoints/vae", exist_ok=True)
 
-# Create checkpoint callback
-checkpoint_path = os.path.join(checkpoint_dir, "vae_weights_epoch_{epoch:02d}.h5")
+# Create checkpoint callback with correct filepath format
 checkpoint_callback = ModelCheckpoint(
-    filepath=checkpoint_path,
+    filepath="checkpoints/vae/vae_weights_epoch_{epoch:02d}.weights.h5",  # Fixed extension
     save_weights_only=True,
-    save_freq='epoch',  # save every epoch
+    save_freq='epoch',
     verbose=1
 )
 
 # Training VAE
-vae.fit(
+history = vae.fit(
     train_generator,
-    epochs=15,  # You can increase later
+    epochs=1,#update epochs
     validation_data=val_generator,
     callbacks=[checkpoint_callback]
 )
 
-# Save the final model weights
-final_weights_path = os.path.join(final_model_dir, "vae_final_weights.h5")
-vae.save_weights(final_weights_path)
-print(f"Final weights saved to {final_weights_path}")
 
-# Optional: Save the entire model (architecture + weights)
-final_model_path = os.path.join(final_model_dir, "vae_complete_model")
-vae.save(final_model_path)
-print(f"Complete model saved to {final_model_path}")
+# Save the weights separately for encoder and decoder
+encoder.save_weights("saved_models/vae/encoder.weights.h5")  # Fixed extension
+decoder.save_weights("saved_models/vae/decoder.weights.h5")  # Fixed extension
 
+# Save the complete VAE weights
+vae.save_weights("saved_models/vae/vae_complete.weights.h5")  # Fixed extension
 
+# Save the complete model
+vae.save("saved_models/vae/vae_complete_model.keras")
+
+print("Training completed. Models and weights saved.")
 
