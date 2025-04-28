@@ -22,7 +22,8 @@ DROPOUT_RATE = 0.1
 LEARNING_RATE = 5e-5
 VAE_EPOCHS = 10
 HYBRID_EPOCHS = 10
-KL_WEIGHT = 1  # Weight factor for KL loss in VAE
+KL_WEIGHT = 0.001  # Weight factor for KL loss in VAE (reduced from 1.0)
+KL_ANNEALING_EPOCHS = 5  # Number of epochs to gradually increase KL weight
 
 # Paths for saving models and checkpoints
 VAE_WEIGHTS_PATH = "saved_models/vae"
