@@ -4,3 +4,4 @@ tensorflow-io-gcs-filesystem==0.31.0
 numpy==1.26.4
 Pillow==11.2.1
 matplotlib==3.9.4
+scikit-learn==1.6.1

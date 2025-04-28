@@ -54,6 +54,9 @@ def build_vit_classifier():
     model = Model(inputs=inputs, outputs=outputs, name="vit_classifier")
     return model
 
-# Build
-vit_classifier = build_vit_classifier()
-vit_classifier.summary()
+# Only build and test model when this file is run directly
+if __name__ == "__main__":
+    # Build
+    vit_classifier = build_vit_classifier()
+    print("Vision Transformer Classifier Summary:")
+    vit_classifier.summary()

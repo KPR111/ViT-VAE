@@ -46,10 +46,14 @@ def build_decoder():
     decoder = Model(latent_inputs, outputs, name='decoder')
     return decoder
 
-# Build
-encoder = build_encoder()
-decoder = build_decoder()
+# Only build and test models when this file is run directly
+if __name__ == "__main__":
+    # Build
+    encoder = build_encoder()
+    decoder = build_decoder()
 
-# Test models
-encoder.summary()
-decoder.summary()
+    # Test models
+    print("VAE Encoder Summary:")
+    encoder.summary()
+    print("\nVAE Decoder Summary:")
+    decoder.summary()

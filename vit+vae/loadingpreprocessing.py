@@ -19,22 +19,37 @@ valid_datagen = ImageDataGenerator(
     rescale=1./255
 )
 
-# STEP 4: Create Train and Validation Generators
-train_generator = train_datagen.flow_from_directory(
-    TRAIN_DIR,
-    target_size=(224, 224),
-    batch_size=32,
-    class_mode='categorical',
-    shuffle=True
-)
+# Function to create data generators
+def create_data_generators(verbose=True):
+    # Create train generator
+    train_gen = train_datagen.flow_from_directory(
+        TRAIN_DIR,
+        target_size=(224, 224),
+        batch_size=32,
+        class_mode='categorical',
+        shuffle=True
+    )
 
-val_generator = valid_datagen.flow_from_directory(
-    VALID_DIR,
-    target_size=(224, 224),
-    batch_size=32,
-    class_mode='categorical',
-    shuffle=False  # usually no shuffling in validation
-)
+    # Create validation generator
+    val_gen = valid_datagen.flow_from_directory(
+        VALID_DIR,
+        target_size=(224, 224),
+        batch_size=32,
+        class_mode='categorical',
+        shuffle=False  # usually no shuffling in validation
+    )
 
-# Check classes
-print(train_generator.class_indices)
+    if verbose:
+        print("Class indices:")
+        print(train_gen.class_indices)
+
+    return train_gen, val_gen
+
+# Create generators when imported
+train_generator, val_generator = create_data_generators(verbose=False)
+
+# Only print class indices when this file is run directly
+if __name__ == "__main__":
+    print("Creating data generators...")
+    _, _ = create_data_generators(verbose=True)
+    print("Data generators created successfully.")

@@ -5,11 +5,6 @@ import os
 from tensorflow.keras.callbacks import ModelCheckpoint
 
 from models.vae_models import build_encoder, build_decoder
-from loadingpreprocessing import train_generator, val_generator
-
-encoder = build_encoder()
-decoder = build_decoder()
-
 
 # VAE Model (Wrapper)
 class VAE(Model):
@@ -28,7 +23,6 @@ class VAE(Model):
         )
         self.add_loss(kl_loss)
         return reconstructed
-
 
     def compile(self, optimizer):
         super(VAE, self).compile()
@@ -54,7 +48,6 @@ class VAE(Model):
             reconstruction = self.decoder(z)
             reconstruction_loss = self.mse_loss_fn(data, reconstruction)
 
-
             kl_loss = -0.5 * (1 + z_log_var - tf.square(z_mean) - tf.exp(z_log_var))
             kl_loss = tf.reduce_mean(tf.reduce_sum(kl_loss, axis=1))
             total_loss = reconstruction_loss + kl_loss
@@ -72,40 +65,52 @@ class VAE(Model):
             "kl_loss": self.kl_loss_tracker.result(),
         }
 
-# Build the VAE model
-vae = VAE(encoder, decoder)
-vae.compile(optimizer=tf.keras.optimizers.Adam(learning_rate=1e-4))
+def train_vae():
+    # Import here to avoid circular imports
+    from loadingpreprocessing import train_generator, val_generator
 
-# Create directories for saving weights
-os.makedirs("saved_models/vae", exist_ok=True)
-os.makedirs("checkpoints/vae", exist_ok=True)
+    # Build the encoder and decoder
+    encoder = build_encoder()
+    decoder = build_decoder()
 
-# Create checkpoint callback with correct filepath format
-checkpoint_callback = ModelCheckpoint(
-    filepath="checkpoints/vae/vae_weights_epoch_{epoch:02d}.weights.h5",  # Fixed extension
-    save_weights_only=True,
-    save_freq='epoch',
-    verbose=1
-)
+    # Build the VAE model
+    vae = VAE(encoder, decoder)
+    vae.compile(optimizer=tf.keras.optimizers.Adam(learning_rate=1e-4))
 
-# Training VAE
-history = vae.fit(
-    train_generator,
-    epochs=1,#update epochs
-    validation_data=val_generator,
-    callbacks=[checkpoint_callback]
-)
+    # Create directories for saving weights
+    os.makedirs("saved_models/vae", exist_ok=True)
+    os.makedirs("checkpoints/vae", exist_ok=True)
 
+    # Create checkpoint callback with correct filepath format
+    checkpoint_callback = ModelCheckpoint(
+        filepath="checkpoints/vae/vae_weights_epoch_{epoch:02d}.weights.h5",  # Fixed extension
+        save_weights_only=True,
+        save_freq='epoch',
+        verbose=1
+    )
 
-# Save the weights separately for encoder and decoder
-encoder.save_weights("saved_models/vae/encoder.weights.h5")  # Fixed extension
-decoder.save_weights("saved_models/vae/decoder.weights.h5")  # Fixed extension
+    # Training VAE
+    history = vae.fit(
+        train_generator,
+        epochs=1,  # update epochs
+        validation_data=val_generator,
+        callbacks=[checkpoint_callback]
+    )
 
-# Save the complete VAE weights
-vae.save_weights("saved_models/vae/vae_complete.weights.h5")  # Fixed extension
+    # Save the weights separately for encoder and decoder
+    encoder.save_weights("saved_models/vae/encoder.weights.h5")  # Fixed extension
+    decoder.save_weights("saved_models/vae/decoder.weights.h5")  # Fixed extension
 
-# Save the complete model
-vae.save("saved_models/vae/vae_complete_model.keras")
+    # Save the complete VAE weights
+    vae.save_weights("saved_models/vae/vae_complete.weights.h5")  # Fixed extension
 
-print("Training completed. Models and weights saved.")
+    # Save the complete model
+    vae.save("saved_models/vae/vae_complete_model.keras")
+
+    print("Training completed. Models and weights saved.")
+
+    return vae, encoder, decoder
+
+if __name__ == "__main__":
+    train_vae()
 
