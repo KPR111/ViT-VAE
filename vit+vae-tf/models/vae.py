@@ -27,11 +27,20 @@ def build_encoder():
     x = layers.Dense(256, activation='relu')(x)  # Increased from 128 to 256
     x = layers.BatchNormalization()(x)
 
-    # Use proper initialization for the latent space
-    z_mean = layers.Dense(LATENT_DIM, name='z_mean',
-                         kernel_initializer='glorot_normal')(x)
-    z_log_var = layers.Dense(LATENT_DIM, name='z_log_var',
-                            kernel_initializer='glorot_normal')(x)
+    # Use proper initialization and regularization for the latent space
+    z_mean = layers.Dense(
+        LATENT_DIM,
+        name='z_mean',
+        kernel_initializer='glorot_normal',
+        kernel_regularizer=tf.keras.regularizers.l2(1e-4)
+    )(x)
+
+    z_log_var = layers.Dense(
+        LATENT_DIM,
+        name='z_log_var',
+        kernel_initializer='glorot_normal',
+        kernel_regularizer=tf.keras.regularizers.l2(1e-4)
+    )(x)
 
     # Sampling function (reparameterization trick)
     def sampling(args):
@@ -127,9 +136,15 @@ class VAE(Model):
         reconstructed = self.decoder(z)
 
         # Add KL loss as part of the layer's loss
-        kl_loss = -0.5 * tf.reduce_mean(
-            1 + z_log_var - tf.square(z_mean) - tf.exp(z_log_var)
+        # Clip z_log_var to prevent extreme values
+        z_log_var_clipped = tf.clip_by_value(z_log_var, -20.0, 2.0)
+
+        # Calculate KL loss with clipped values
+        kl_loss = 0.5 * tf.reduce_mean(
+            tf.exp(z_log_var_clipped) + tf.square(z_mean) - 1.0 - z_log_var_clipped,
+            axis=1
         )
+        kl_loss = tf.reduce_mean(kl_loss)
 
         # Apply KL weight factor with annealing
         kl_weight = self.get_kl_weight()
@@ -166,8 +181,15 @@ class VAE(Model):
             reconstruction = self.decoder(z)
             reconstruction_loss = self.mse_loss_fn(data, reconstruction)
 
-            kl_loss = -0.5 * (1 + z_log_var - tf.square(z_mean) - tf.exp(z_log_var))
-            kl_loss = tf.reduce_mean(tf.reduce_sum(kl_loss, axis=1))
+            # Clip z_log_var to prevent extreme values
+            z_log_var_clipped = tf.clip_by_value(z_log_var, -20.0, 2.0)
+
+            # Calculate KL loss with clipped values
+            kl_loss = 0.5 * tf.reduce_mean(
+                tf.exp(z_log_var_clipped) + tf.square(z_mean) - 1.0 - z_log_var_clipped,
+                axis=1
+            )
+            kl_loss = tf.reduce_mean(kl_loss)
 
             # Get current KL weight with annealing
             kl_weight = self.get_kl_weight()
