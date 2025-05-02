@@ -34,5 +34,9 @@ HYBRID_WEIGHTS_PATH = "saved_models/hybrid"
 VAE_CHECKPOINTS_PATH = "checkpoints/vae"
 HYBRID_CHECKPOINTS_PATH = "checkpoints/hybrid"
 
+# Normalization parameters
+NORMALIZE_MEAN = [0.485, 0.456, 0.406]  # ImageNet mean
+NORMALIZE_STD = [0.229, 0.224, 0.225]   # ImageNet std
+
 # Device configuration (PyTorch specific)
 DEVICE = "cuda"  # Will be updated at runtime based on availability

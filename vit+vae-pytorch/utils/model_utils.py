@@ -189,8 +189,10 @@ def load_trained_combined_model():
     decoder = build_decoder()
     vit_classifier = build_vit_classifier()
 
-    # Get the size of the training dataset (approximate value for loading)
-    train_data_size = 1000  # This is just a placeholder value for loading
+    # For loading, we just need a reasonable placeholder value
+    # The actual value doesn't matter since we're just loading weights
+    # and not training the model
+    train_data_size = 10000  # Placeholder value for loading
 
     # Build combined model
     combined_model = build_combined_model(
@@ -231,7 +233,8 @@ if __name__ == "__main__":
     hybrid_model = build_hybrid_model(encoder, vit_classifier)
 
     # Test combined model building
-    train_data_size = 1000  # Example value
-    combined_model = build_combined_model(encoder, decoder, vit_classifier, BATCH_SIZE, train_data_size)
+    # Use a placeholder value for testing
+    test_data_size = 10000  # Placeholder for testing
+    combined_model = build_combined_model(encoder, decoder, vit_classifier, BATCH_SIZE, test_data_size)
 
     print("Successfully built all models")

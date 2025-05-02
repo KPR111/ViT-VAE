@@ -12,7 +12,7 @@ from torchvision import transforms
 
 from utils.model_utils import load_trained_hybrid_model, load_trained_combined_model, get_device
 from data.data_loader import get_class_mapping
-from config.model_config import IMAGE_SIZE
+from config.model_config import IMAGE_SIZE, NORMALIZE_MEAN, NORMALIZE_STD
 
 def predict_image(image_path, model, class_indices, device):
     """
@@ -32,7 +32,7 @@ def predict_image(image_path, model, class_indices, device):
         transforms.Resize(IMAGE_SIZE),
         transforms.CenterCrop(IMAGE_SIZE),  # Ensure exact size
         transforms.ToTensor(),
-        transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225])
+        transforms.Normalize(mean=NORMALIZE_MEAN, std=NORMALIZE_STD)
     ])
 
     # Load and preprocess the image
