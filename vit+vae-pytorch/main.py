@@ -15,10 +15,7 @@ def main():
     parser = argparse.ArgumentParser(description='VAE-ViT Hybrid Model for Plant Disease Classification')
     subparsers = parser.add_subparsers(dest='command', help='Command to run')
 
-    # Train VAE command
-    train_vae_parser = subparsers.add_parser('train-vae', help='Train the VAE model')
-    train_vae_parser.add_argument('--epochs', type=int, default=cfg.VAE_EPOCHS, help='Number of epochs to train')
-    train_vae_parser.add_argument('--resume', action='store_true', help='Resume training from checkpoint')
+    # Combined model is the only training option now
 
     # Train combined model command (which is our hybrid model)
     train_combined_parser = subparsers.add_parser('train-combined', help='Train the combined model (VAE and ViT simultaneously)')
@@ -51,17 +48,7 @@ def main():
     os.makedirs('checkpoints/hybrid', exist_ok=True)
 
     # Handle commands
-    if args.command == "train-vae":
-        print(f"Training VAE for {args.epochs} epochs...")
-        from training.train_vae import train_vae
-        # Update epochs in config
-        cfg.VAE_EPOCHS = args.epochs
-        # Run training
-        train_vae(epochs=args.epochs, resume=args.resume)
-
-    # The train-hybrid command has been removed in favor of the combined model
-
-    elif args.command == "train-combined":
+    if args.command == "train-combined":
         print(f"Training combined model for {args.epochs} epochs...")
         from training.train_combined import train_combined_model
         # Update epochs in config

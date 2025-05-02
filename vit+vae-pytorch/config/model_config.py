@@ -23,10 +23,9 @@ DROPOUT_RATE = 0.1
 
 # Training parameters
 LEARNING_RATE = 1e-4
-VAE_EPOCHS = 10#
-HYBRID_EPOCHS =10
-KL_WEIGHT = 0.01#  # Weight factor for KL loss in VAE (reduced from 0.001)
-KL_ANNEALING_EPOCHS = 10#  # Number of epochs to gradually increase KL weight
+HYBRID_EPOCHS = 10  # Number of epochs for training the combined model
+KL_WEIGHT = 0.01  # Weight factor for KL loss in the combined model
+KL_ANNEALING_EPOCHS = 10  # Number of epochs to gradually increase KL weight
 
 # Paths for saving models and checkpoints
 VAE_WEIGHTS_PATH = "saved_models/vae"

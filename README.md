@@ -19,15 +19,13 @@ vit+vae-pytorch/
 │   ├── vit.py               # Vision Transformer model
 │   └── combined_model.py    # Combined model (VAE and ViT trained simultaneously)
 ├── training/                # Training scripts
-│   ├── train_vae.py         # VAE training script
 │   └── train_combined.py    # Combined model training script
 ├── inference/               # Inference scripts
 │   ├── inference.py         # Single image inference
 │   └── batch_inference.py   # Batch inference
 ├── utils/                   # Utility functions
 │   └── model_utils.py       # Model loading and management
-├── main.py                  # Main entry point
-└── simple_train_vae.py      # Simplified VAE training script
+└── main.py                  # Main entry point
 ```
 
 ## Installation
@@ -55,30 +53,7 @@ vit+vae-pytorch/
 
 The project uses a command-line interface through `main.py` for all operations.
 
-### Training Options
-
-You have two training options:
-
-1. Train the VAE separately first (optional)
-2. Train the combined model (VAE and ViT trained simultaneously)
-
-### Option 1: Training the VAE (Optional)
-
-```bash
-# Navigate to the project directory
-cd vit+vae-pytorch
-
-# Train the VAE for 10 epochs (adjust as needed)
-python main.py train-vae --epochs 10
-```
-
-During VAE training:
-- The model will learn to encode and decode plant leaf images
-- Checkpoints will be saved in `checkpoints/vae/`
-- Final weights will be saved in `saved_models/vae/`
-- Progress will be displayed with loss metrics
-
-### Option 2: Training the Combined Model
+### Training the Model
 
 Train the combined model where both VAE and ViT components are trained simultaneously:
 
