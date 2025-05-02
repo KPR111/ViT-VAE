@@ -88,7 +88,19 @@ python main.py batch --input_dir path/to/images --output_dir batch_results --bat
 ## Model Architecture
 
 ### Combined VAE-ViT Model
-The combined model trains both components simultaneously with a joint loss function. This approach allows the VAE to learn latent representations that are both good for reconstruction and useful for classification.
+
+Our model combines a Variational Autoencoder (VAE) and a Vision Transformer (ViT) in a unified architecture that is trained end-to-end with a joint loss function. This approach allows the VAE to learn latent representations that are both good for reconstruction and optimized for classification.
+
+#### Simultaneous Training Approach
+
+Unlike traditional methods that might pre-train the VAE separately and then train a classifier on its frozen latent space, our approach:
+
+1. **Trains both components simultaneously** from scratch
+2. **Uses a combined loss function** that incorporates both reconstruction and classification objectives
+3. **Allows gradient flow** between components, enabling the VAE to learn representations that directly benefit classification
+4. **Applies KL annealing** to balance reconstruction quality and latent space regularization
+
+This simultaneous training creates a more cohesive model where the latent space serves both reconstruction and classification purposes effectively.
 
 #### 1. Variational Autoencoder (VAE)
 - **Encoder**: Compresses 224×224×3 RGB images into a 256-dimensional latent space
@@ -102,8 +114,9 @@ The combined model trains both components simultaneously with a joint loss funct
 - **Loss**: Cross-entropy classification loss
 
 #### 3. Combined Loss
-- Total loss = Reconstruction loss + Weighted KL divergence loss + Classification loss
-- KL weight is gradually increased during training (annealing)
+- **Total loss** = Reconstruction loss + Weighted KL divergence loss + Classification loss
+- **Weighting strategy**: KL weight is gradually increased during training (annealing)
+- **Benefits**: Prevents posterior collapse while ensuring both good reconstruction and classification performance
 
 ### Dimension Changes During Training
 
@@ -126,15 +139,94 @@ The combined model trains both components simultaneously with a joint loss funct
 7. **Final Deconv Layer**: 224×224×3 (kernel=3, padding=1)
 8. **Output**: 224×224×3 (reconstructed image)
 
-#### Latent Space to Classification (ViT)
-1. **Latent Vector**: 256
-2. **Dense Layer**: 256 (expands the latent vector)
-3. **Reshape to Patches**: 16 patches × 16 dimensions (PATCH_SIZE=16, NUM_PATCHES=256/16=16)
-4. **Transformer Blocks**: 6 layers of self-attention and MLP (maintaining 16×16 dimensions)
-5. **Layer Normalization**: 16×16
-6. **Flatten**: 256
-7. **Classification Head**: 38 (number of plant disease classes)
-8. **Output**: 38-dimensional probability distribution
+### Vision Transformer (ViT) Architecture in Detail
+
+The Vision Transformer component processes the latent vector from the VAE encoder and transforms it into class predictions. Unlike traditional ViTs that operate directly on image patches, our model works with the compressed latent representation.
+
+#### Configuration Parameters
+- **LATENT_DIM (L)** = 256: Size of the input latent vector
+- **BATCH_SIZE (B)** = 32: Number of samples processed in each batch
+- **PATCH_SIZE (P)** = 16: Size of each patch's feature vector
+- **NUM_PATCHES (N)** = 16: Number of patches (LATENT_DIM ÷ PATCH_SIZE = 256 ÷ 16 = 16)
+- **NUM_CLASSES (C)** = 38: Number of output classes (plant disease categories)
+- **NUM_TRANSFORMER_LAYERS** = 6: Number of transformer blocks
+- **NUM_HEADS** = 8: Number of attention heads
+- **DROPOUT_RATE** = 0.1: Dropout probability
+
+#### Dimension Flow Through the ViT
+
+| Stage | Operation | Input Shape | Output Shape | Description |
+|-------|-----------|-------------|--------------|-------------|
+| **Input** | Latent Vector | [B, L] = [32, 256] | [32, 256] | Latent representation from VAE encoder |
+| **Dense Layer** | Linear(256, 256) | [32, 256] | [32, 256] | Transforms latent vector while preserving dimensions |
+| **Reshape** | view(B, N, P) | [32, 256] | [32, 16, 16] | Reshapes to sequence of patches for transformer processing |
+| **Transformer Blocks** | 6 layers of self-attention | [32, 16, 16] | [32, 16, 16] | Each block processes relationships between patches |
+| **Layer Norm** | LayerNorm(16) | [32, 16, 16] | [32, 16, 16] | Normalizes features for stable processing |
+| **Flatten** | Flatten() | [32, 16, 16] | [32, 256] | Prepares for classification |
+| **Dropout** | Dropout(0.3) | [32, 256] | [32, 256] | Prevents overfitting |
+| **Classification** | Linear(256, 38) | [32, 256] | [32, 38] | Maps to class logits |
+| **Softmax** | Softmax(dim=1) | [32, 38] | [32, 38] | Converts to class probabilities |
+
+#### Transformer Block Details
+
+Each transformer block consists of:
+
+1. **Layer Normalization 1**: Normalizes input features
+2. **Multi-Head Attention**:
+   - Input: [32, 16, 16]
+   - 8 attention heads, each processing 16 ÷ 8 = 2 dimensions
+   - Self-attention across the 16 patches
+   - Output: [32, 16, 16]
+3. **Skip Connection**: Adds input to attention output
+4. **Layer Normalization 2**: Normalizes features again
+5. **MLP Block**:
+   - Linear layer: [16 → 16]
+   - GELU activation
+   - Dropout (0.1)
+   - Output: [32, 16, 16]
+6. **Skip Connection**: Adds normalized input to MLP output
+
+#### Visual Representation of Dimension Flow
+
+```
+Input Latent Vector [32, 256]
+       ↓
+Dense Layer [32, 256]
+       ↓
+Reshape to Patches [32, 16, 16]
+       ↓
+┌─────────────────────────┐
+│ Transformer Block 1     │
+│  ┌─────┐  ┌───────────┐ │
+│  │Norm1│→ │Self-Attn  │ │
+│  └─────┘  └───────────┘ │
+│      ↓        ↓         │
+│      └────→ (+)         │
+│             ↓           │
+│  ┌─────┐  ┌───────────┐ │
+│  │Norm2│→ │MLP Block  │ │
+│  └─────┘  └───────────┘ │
+│      ↓        ↓         │
+│      └────→ (+)         │
+└─────────────↓───────────┘
+       ↓
+     ... (5 more blocks)
+       ↓
+Layer Normalization [32, 16, 16]
+       ↓
+Flatten [32, 256]
+       ↓
+Classification Head [32, 38]
+       ↓
+Output Probabilities [32, 38]
+```
+
+#### Key Insights
+
+- **Patch Processing**: Instead of processing image patches directly, our ViT processes "patches" of the latent vector
+- **Attention Mechanism**: Each attention head focuses on different aspects of relationships between latent patches
+- **Dimensionality**: The model maintains the total information (256 dimensions) throughout processing until the final classification layer
+- **Efficiency**: Working with the compressed latent representation (256D) rather than raw images (224×224×3) significantly reduces computational requirements
 
 ### Understanding KL Annealing and Posterior Collapse
 
