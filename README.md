@@ -118,26 +118,116 @@ This simultaneous training creates a more cohesive model where the latent space 
 - **Weighting strategy**: KL weight is gradually increased during training (annealing)
 - **Benefits**: Prevents posterior collapse while ensuring both good reconstruction and classification performance
 
-### Dimension Changes During Training
+## Detailed Architecture and Dimension Flow
 
-#### Input to Latent Space (Encoder)
-1. **Input Image**: 224×224×3 (RGB image)
-2. **First Conv Layer**: 112×112×32 (stride=2, kernel=3, padding=1)
-3. **Second Conv Layer**: 56×56×64 (stride=2, kernel=3, padding=1)
-4. **Third Conv Layer**: 28×28×128 (stride=2, kernel=3, padding=1)
-5. **Flatten**: 100,352 (28×28×128)
-6. **Fully Connected**: 256
-7. **Latent Space**: 256 (mean) and 256 (log_var) → 256-dimensional latent vector (z)
+### Variational Autoencoder (VAE) Architecture in Detail
 
-#### Latent Space to Reconstruction (Decoder)
-1. **Latent Vector**: 256
-2. **Fully Connected**: 28×28×32 = 25,088
-3. **Reshape**: 28×28×32
-4. **First Deconv Layer**: 56×56×64 (stride=2, kernel=3, padding=1, output_padding=1)
-5. **Second Deconv Layer**: 112×112×32 (stride=2, kernel=3, padding=1, output_padding=1)
-6. **Third Deconv Layer**: 224×224×16 (stride=2, kernel=3, padding=1, output_padding=1)
-7. **Final Deconv Layer**: 224×224×3 (kernel=3, padding=1)
-8. **Output**: 224×224×3 (reconstructed image)
+The VAE consists of an encoder that compresses images into a latent space and a decoder that reconstructs images from this latent representation. The probabilistic nature of the latent space enables both effective compression and generative capabilities.
+
+#### Configuration Parameters
+- **IMAGE_SIZE** = (224, 224): Input image dimensions
+- **IMAGE_CHANNELS** = 3: RGB color channels
+- **LATENT_DIM** = 256: Dimensionality of the latent space
+- **BATCH_SIZE** = 32: Number of samples processed in each batch
+- **KL_WEIGHT** = 0.01: Maximum weight for the KL divergence term
+- **KL_ANNEALING_EPOCHS** = 10: Number of epochs to gradually increase KL weight
+
+#### Encoder Architecture
+
+| Stage | Operation | Input Shape | Output Shape | Parameters |
+|-------|-----------|-------------|--------------|------------|
+| **Input** | RGB Image | [B, C, H, W] = [32, 3, 224, 224] | [32, 3, 224, 224] | - |
+| **Conv1** | Conv2d + BN + ReLU | [32, 3, 224, 224] | [32, 32, 112, 112] | stride=2, kernel=3, padding=1 |
+| **Conv2** | Conv2d + BN + ReLU | [32, 32, 112, 112] | [32, 64, 56, 56] | stride=2, kernel=3, padding=1 |
+| **Conv3** | Conv2d + BN + ReLU | [32, 64, 56, 56] | [32, 128, 28, 28] | stride=2, kernel=3, padding=1 |
+| **Flatten** | View | [32, 128, 28, 28] | [32, 100352] | 128 × 28 × 28 = 100,352 |
+| **FC** | Linear + BN + ReLU | [32, 100352] | [32, 256] | - |
+| **Mean** | Linear | [32, 256] | [32, 256] | Projects to mean vector |
+| **LogVar** | Linear | [32, 256] | [32, 256] | Projects to log variance |
+| **Sampling** | Reparameterization | [32, 256], [32, 256] | [32, 256] | z = mean + std × epsilon |
+
+#### Decoder Architecture
+
+| Stage | Operation | Input Shape | Output Shape | Parameters |
+|-------|-----------|-------------|--------------|------------|
+| **Input** | Latent Vector | [B, L] = [32, 256] | [32, 256] | - |
+| **FC** | Linear + BN + ReLU | [32, 256] | [32, 25088] | 256 → 28 × 28 × 32 = 25,088 |
+| **Reshape** | View | [32, 25088] | [32, 32, 28, 28] | Reshape to feature maps |
+| **Deconv1** | ConvTranspose2d + BN + ReLU | [32, 32, 28, 28] | [32, 64, 56, 56] | stride=2, kernel=3, padding=1, output_padding=1 |
+| **Deconv2** | ConvTranspose2d + BN + ReLU | [32, 64, 56, 56] | [32, 32, 112, 112] | stride=2, kernel=3, padding=1, output_padding=1 |
+| **Deconv3** | ConvTranspose2d + BN + ReLU | [32, 32, 112, 112] | [32, 16, 224, 224] | stride=2, kernel=3, padding=1, output_padding=1 |
+| **DeconvFinal** | ConvTranspose2d + Sigmoid | [32, 16, 224, 224] | [32, 3, 224, 224] | kernel=3, padding=1 |
+
+#### Visual Representation of VAE Architecture
+
+```
+                                 VAE ARCHITECTURE
+                                 ----------------
+                                        ↓
+┌─────────────────────────────────────────────────────────────────────────┐
+│                               ENCODER                                    │
+│                                                                         │
+│  Input Image [32, 3, 224, 224]                                          │
+│         ↓                                                               │
+│  Conv1 + BN + ReLU [32, 32, 112, 112]                                   │
+│         ↓                                                               │
+│  Conv2 + BN + ReLU [32, 64, 56, 56]                                     │
+│         ↓                                                               │
+│  Conv3 + BN + ReLU [32, 128, 28, 28]                                    │
+│         ↓                                                               │
+│  Flatten [32, 100352]                                                   │
+│         ↓                                                               │
+│  FC + BN + ReLU [32, 256]                                               │
+│         ↓                                                               │
+│  ┌─────────────────┐          ┌─────────────────┐                       │
+│  │ Mean [32, 256]  │          │ LogVar [32, 256]│                       │
+│  └─────────────────┘          └─────────────────┘                       │
+│         ↓                            ↓                                  │
+│         └─────────→ Sampling ←───────┘                                  │
+│                       ↓                                                 │
+│                Latent Vector z [32, 256]                                │
+└─────────────────────────────┬───────────────────────────────────────────┘
+                              ↓
+┌─────────────────────────────────────────────────────────────────────────┐
+│                               DECODER                                    │
+│                                                                         │
+│  Latent Vector z [32, 256]                                              │
+│         ↓                                                               │
+│  FC + BN + ReLU [32, 25088]                                             │
+│         ↓                                                               │
+│  Reshape [32, 32, 28, 28]                                               │
+│         ↓                                                               │
+│  Deconv1 + BN + ReLU [32, 64, 56, 56]                                   │
+│         ↓                                                               │
+│  Deconv2 + BN + ReLU [32, 32, 112, 112]                                 │
+│         ↓                                                               │
+│  Deconv3 + BN + ReLU [32, 16, 224, 224]                                 │
+│         ↓                                                               │
+│  DeconvFinal + Sigmoid [32, 3, 224, 224]                                │
+│         ↓                                                               │
+│  Reconstructed Image [32, 3, 224, 224]                                  │
+└─────────────────────────────────────────────────────────────────────────┘
+```
+
+#### Reparameterization Trick
+
+The VAE uses the reparameterization trick to enable backpropagation through the sampling process:
+
+1. **Encoder outputs**: mean (μ) and log variance (log σ²) vectors
+2. **Standard deviation**: σ = exp(0.5 × log σ²)
+3. **Random noise**: ε ~ N(0, 1) (standard normal distribution)
+4. **Sampling**: z = μ + σ × ε
+
+This approach allows gradient flow through the sampling operation during training.
+
+#### Key Components of the VAE
+
+1. **Convolutional Layers**: Extract hierarchical features from images with progressively reduced spatial dimensions and increased channel depth
+2. **Batch Normalization**: Stabilizes and accelerates training by normalizing activations
+3. **Latent Space**: Probabilistic representation where each point is defined by a mean and variance
+4. **Transposed Convolutions**: Upsample the latent representation back to image dimensions
+5. **Skip Connections**: Not used in this implementation, but could be added to preserve fine details
+6. **Weight Initialization**: Xavier/Glorot initialization for stable training
 
 ### Vision Transformer (ViT) Architecture in Detail
 
