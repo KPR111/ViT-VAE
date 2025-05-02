@@ -22,6 +22,15 @@ def main():
     train_combined_parser.add_argument('--epochs', type=int, default=cfg.HYBRID_EPOCHS, help='Number of epochs to train')
     train_combined_parser.add_argument('--resume', action='store_true', help='Resume training from checkpoint')
 
+    # Test command
+    test_parser = subparsers.add_parser('test', help='Test the combined model on the test dataset')
+    test_parser.add_argument('--test_dir', type=str, default=cfg.TEST_DIR, help='Path to the test directory')
+    test_parser.add_argument('--output_dir', type=str, default='test_results', help='Directory to save test results')
+
+    # Check test directory command
+    check_test_parser = subparsers.add_parser('check-test-dir', help='Check the test directory and print information about its contents')
+    check_test_parser.add_argument('--test_dir', type=str, default=cfg.TEST_DIR, help='Path to the test directory')
+
     # Inference command
     inference_parser = subparsers.add_parser('inference', help='Run inference on a single image')
     inference_parser.add_argument('--image', type=str, required=True, help='Path to the image file')
@@ -55,6 +64,18 @@ def main():
         cfg.HYBRID_EPOCHS = args.epochs
         # Run training
         train_combined_model(epochs=args.epochs, resume=args.resume)
+
+    elif args.command == "check-test-dir":
+        print(f"Checking test directory: {args.test_dir}")
+        from data.test_data_loader import check_test_directory
+        # Check test directory
+        check_test_directory(test_dir=args.test_dir)
+
+    elif args.command == "test":
+        print(f"Testing combined model on test dataset...")
+        from training.test_combined import test_combined_model
+        # Run testing
+        test_combined_model(test_dir=args.test_dir, output_dir=args.output_dir)
 
     elif args.command == "inference":
         print(f"Running inference on image: {args.image}")

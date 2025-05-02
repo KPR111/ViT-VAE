@@ -21,7 +21,8 @@ vit+vae-pytorch/
 │   ├── vit.py               # Vision Transformer model
 │   └── combined_model.py    # Combined model (VAE and ViT trained simultaneously)
 ├── training/                # Training scripts
-│   └── train_combined.py    # Combined model training script
+│   ├── train_combined.py    # Combined model training script
+│   └── test_combined.py     # Testing script for evaluation
 ├── inference/               # Inference scripts
 │   ├── inference.py         # Single image inference
 │   └── batch_inference.py   # Batch inference
@@ -70,6 +71,40 @@ During combined model training:
 - Checkpoints will be saved in `checkpoints/hybrid/`
 - Final weights will be saved in `saved_models/hybrid/`
 - Training metrics (reconstruction loss, classification loss, accuracy) will be displayed
+
+### Testing
+
+After training the model, you can evaluate its performance on a test dataset:
+
+```bash
+python main.py test --test_dir path/to/test/dataset --output_dir test_results
+```
+
+The test directory can have a flat structure with all images in a single directory, where the class name is part of the filename (e.g., "AppleScab3.JPG"). The testing script will automatically extract the class name from the filename. You can specify a custom test directory or use the default one configured in `config/model_config.py`.
+
+#### Checking Test Directory
+
+If you're having issues with the test command, you can check your test directory structure:
+
+```bash
+python main.py check-test-dir --test_dir path/to/test/dataset
+```
+
+This will:
+- List all files in the test directory
+- Count the number of image files
+- Show sample image filenames
+- Display the extracted class names from filenames
+
+#### Testing Results
+
+The test command will:
+- Evaluate the model on the test dataset
+- Calculate accuracy, precision, recall, and F1 score
+- Generate a confusion matrix
+- Show sample reconstructions from the VAE component
+- Visualize the latent space
+- Save all results to the specified output directory
 
 ### Inference
 

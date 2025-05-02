@@ -5,7 +5,7 @@ Configuration parameters for models in PyTorch implementation.
 # Data paths (same as TensorFlow version)
 TRAIN_DIR = r"C:\Users\Prudvi\Downloads\archive\New Plant Diseases Dataset(Augmented)\New Plant Diseases Dataset(Augmented)\train"
 VALID_DIR = r"C:\Users\Prudvi\Downloads\archive\New Plant Diseases Dataset(Augmented)\New Plant Diseases Dataset(Augmented)\valid"
-TEST_DIR = r"C:\Users\Prudvi\Downloads\archive\test\test"
+TEST_DIR =  r"C:\Users\Prudvi\Downloads\archive\test\test"
 
 # Model parameters
 IMAGE_SIZE = (224, 224)
