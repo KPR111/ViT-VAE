@@ -20,12 +20,7 @@ def main():
     train_vae_parser.add_argument('--epochs', type=int, default=cfg.VAE_EPOCHS, help='Number of epochs to train')
     train_vae_parser.add_argument('--resume', action='store_true', help='Resume training from checkpoint')
 
-    # Train hybrid model command
-    train_hybrid_parser = subparsers.add_parser('train-hybrid', help='Train the hybrid model')
-    train_hybrid_parser.add_argument('--epochs', type=int, default=cfg.HYBRID_EPOCHS, help='Number of epochs to train')
-    train_hybrid_parser.add_argument('--resume', action='store_true', help='Resume training from checkpoint')
-
-    # Train combined model command
+    # Train combined model command (which is our hybrid model)
     train_combined_parser = subparsers.add_parser('train-combined', help='Train the combined model (VAE and ViT simultaneously)')
     train_combined_parser.add_argument('--epochs', type=int, default=cfg.HYBRID_EPOCHS, help='Number of epochs to train')
     train_combined_parser.add_argument('--resume', action='store_true', help='Resume training from checkpoint')
@@ -35,8 +30,8 @@ def main():
     inference_parser.add_argument('--image', type=str, required=True, help='Path to the image file')
     inference_parser.add_argument('--visualize', action='store_true', help='Visualize the prediction')
     inference_parser.add_argument('--output', type=str, help='Path to save the visualization')
-    inference_parser.add_argument('--model', type=str, default='hybrid', choices=['hybrid', 'combined'],
-                                 help='Model type to use for inference (hybrid or combined)')
+    inference_parser.add_argument('--model', type=str, default='combined', choices=['combined'],
+                                 help='Model type to use for inference (combined model)')
 
     # Batch inference command
     batch_parser = subparsers.add_parser('batch', help='Run inference on multiple images')
@@ -44,8 +39,8 @@ def main():
     batch_parser.add_argument('--output_dir', type=str, required=True, help='Directory to save results')
     batch_parser.add_argument('--batch_size', type=int, default=32, help='Batch size for inference')
     batch_parser.add_argument('--visualize', action='store_true', help='Visualize the predictions')
-    batch_parser.add_argument('--model', type=str, default='hybrid', choices=['hybrid', 'combined'],
-                             help='Model type to use for inference (hybrid or combined)')
+    batch_parser.add_argument('--model', type=str, default='combined', choices=['combined'],
+                             help='Model type to use for inference (combined model)')
 
     args = parser.parse_args()
 
@@ -64,13 +59,7 @@ def main():
         # Run training
         train_vae(epochs=args.epochs, resume=args.resume)
 
-    elif args.command == "train-hybrid":
-        print(f"Training hybrid model for {args.epochs} epochs...")
-        from training.train_hybrid import train_hybrid_model
-        # Update epochs in config
-        cfg.HYBRID_EPOCHS = args.epochs
-        # Run training
-        train_hybrid_model(epochs=args.epochs, resume=args.resume)
+    # The train-hybrid command has been removed in favor of the combined model
 
     elif args.command == "train-combined":
         print(f"Training combined model for {args.epochs} epochs...")

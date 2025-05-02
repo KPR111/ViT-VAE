@@ -5,7 +5,6 @@ import os
 import torch
 from models.vae import build_encoder, build_decoder, VAE
 from models.vit import build_vit_classifier
-from models.hybrid import build_hybrid_model
 from models.combined_model import build_combined_model
 from config.model_config import VAE_WEIGHTS_PATH, HYBRID_WEIGHTS_PATH, DEVICE, BATCH_SIZE
 
@@ -148,34 +147,13 @@ def verify_vae_weights():
 
 def load_trained_hybrid_model():
     """
-    Load the trained hybrid model.
+    Load the trained hybrid model (using the combined model).
 
     Returns:
-        HybridModel: Loaded hybrid model or None if loading fails
+        CombinedModel: Loaded combined model or None if loading fails
     """
-    # Load encoder
-    encoder = load_vae_encoder()
-    if encoder is None:
-        return None
-
-    # Build ViT classifier
-    vit_classifier = build_vit_classifier()
-
-    # Build hybrid model
-    hybrid_model = build_hybrid_model(encoder, vit_classifier)
-
-    # Move model to device
-    device = get_device()
-    hybrid_model = hybrid_model.to(device)
-
-    try:
-        hybrid_path = os.path.join(HYBRID_WEIGHTS_PATH, "hybrid_model.pt")
-        hybrid_model.load_state_dict(torch.load(hybrid_path, map_location=device))
-        print("Successfully loaded hybrid model weights")
-        return hybrid_model
-    except Exception as e:
-        print(f"Could not load hybrid model weights: {e}")
-        return None
+    # This function now uses the combined model as the hybrid model
+    return load_trained_combined_model()
 
 def load_trained_combined_model():
     """
@@ -230,9 +208,8 @@ if __name__ == "__main__":
     decoder = build_decoder()
     vae = VAE()
     vit_classifier = build_vit_classifier()
-    hybrid_model = build_hybrid_model(encoder, vit_classifier)
 
-    # Test combined model building
+    # Test combined model building (which is now our hybrid model)
     # Use a placeholder value for testing
     test_data_size = 10000  # Placeholder for testing
     combined_model = build_combined_model(encoder, decoder, vit_classifier, BATCH_SIZE, test_data_size)

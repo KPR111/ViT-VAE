@@ -17,10 +17,10 @@ vit+vae-pytorch/
 ├── models/                  # Model definitions
 │   ├── vae.py               # VAE model
 │   ├── vit.py               # Vision Transformer model
-│   └── hybrid.py            # Hybrid model combining VAE and ViT
+│   └── combined_model.py    # Combined model (VAE and ViT trained simultaneously)
 ├── training/                # Training scripts
 │   ├── train_vae.py         # VAE training script
-│   └── train_hybrid.py      # Hybrid model training script
+│   └── train_combined.py    # Combined model training script
 ├── inference/               # Inference scripts
 │   ├── inference.py         # Single image inference
 │   └── batch_inference.py   # Batch inference
@@ -55,14 +55,14 @@ vit+vae-pytorch/
 
 The project uses a command-line interface through `main.py` for all operations.
 
-### Complete Training Pipeline
+### Training Options
 
-The training process consists of two sequential steps:
+You have two training options:
 
-1. First, train the VAE to learn a good latent representation
-2. Then, train the hybrid model using the pre-trained VAE encoder
+1. Train the VAE separately first (optional)
+2. Train the combined model (VAE and ViT trained simultaneously)
 
-### Step 1: Training the VAE
+### Option 1: Training the VAE (Optional)
 
 ```bash
 # Navigate to the project directory
@@ -78,46 +78,55 @@ During VAE training:
 - Final weights will be saved in `saved_models/vae/`
 - Progress will be displayed with loss metrics
 
-### Step 2: Training the Hybrid Model
+### Option 2: Training the Combined Model
 
-After the VAE training is complete, train the hybrid model:
+Train the combined model where both VAE and ViT components are trained simultaneously:
 
 ```bash
-# Train the hybrid model for 10 epochs (adjust as needed)
-python main.py train-hybrid --epochs 10
+# Train the combined model for 10 epochs (adjust as needed)
+python main.py train-combined --epochs 10
 ```
 
-During hybrid model training:
-- The pre-trained VAE encoder weights will be loaded and frozen
-- Only the Vision Transformer component will be trained
+During combined model training:
+- Both the VAE and ViT components are trained simultaneously
+- The model uses a combined loss function (VAE reconstruction + KL divergence + classification)
 - Checkpoints will be saved in `checkpoints/hybrid/`
 - Final weights will be saved in `saved_models/hybrid/`
-- Training metrics (accuracy, loss) will be displayed
+- Training metrics (reconstruction loss, classification loss, accuracy) will be displayed
 
 ### Inference
 
 For single image inference:
 
 ```bash
-python main.py inference --image path/to/image.jpg --visualize
+python main.py inference --image path/to/image.jpg --visualize --model combined
 ```
 
 For batch inference:
 
 ```bash
-python main.py batch --input_dir path/to/images --output_dir batch_results --batch_size 32 --visualize
+python main.py batch --input_dir path/to/images --output_dir batch_results --batch_size 32 --visualize --model combined
 ```
 
 ## Model Architecture
 
-### 1. Variational Autoencoder (VAE)
-- **Encoder**: Compresses 224×224×3 RGB images into a 256-dimensional latent space
-- **Decoder**: Reconstructs images from the latent space (used only during VAE training)
+### Combined VAE-ViT Model
+The combined model trains both components simultaneously with a joint loss function:
 
-### 2. Vision Transformer (ViT)
+#### 1. Variational Autoencoder (VAE)
+- **Encoder**: Compresses 224×224×3 RGB images into a 256-dimensional latent space
+- **Decoder**: Reconstructs images from the latent space
+- **Loss**: Reconstruction loss (MSE) + KL divergence loss with annealing
+
+#### 2. Vision Transformer (ViT)
 - Takes the 256-dimensional latent vector from the VAE encoder
 - Processes it through transformer blocks with self-attention mechanisms
-- Outputs a probability distribution over 38 plant disease classes
+- Outputs a probability distribution over plant disease classes
+- **Loss**: Cross-entropy classification loss
+
+#### 3. Combined Loss
+- Total loss = Reconstruction loss + Weighted KL divergence loss + Classification loss
+- KL weight is gradually increased during training (annealing)
 
 ## Dataset
 

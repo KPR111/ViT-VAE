@@ -12,7 +12,7 @@ import pandas as pd
 from tqdm import tqdm
 from torchvision import transforms
 
-from utils.model_utils import load_trained_hybrid_model, load_trained_combined_model, get_device
+from utils.model_utils import load_trained_combined_model, get_device
 from data.data_loader import get_class_mapping
 from config.model_config import IMAGE_SIZE, NORMALIZE_MEAN, NORMALIZE_STD
 
@@ -74,11 +74,8 @@ def predict_batch(image_paths, model, class_indices, device, batch_size=32):
 
         # Forward pass
         with torch.no_grad():
-            # Check if it's a combined model or hybrid model
-            if hasattr(model, 'decoder'):  # It's a combined model
-                _, outputs, _, _, _ = model(batch_tensor)
-            else:  # It's a hybrid model
-                outputs = model(batch_tensor)
+            # Get outputs from the combined model
+            _, outputs, _, _, _ = model(batch_tensor)
 
         # Calculate inference time
         inference_time = (time.time() - start_time) / len(batch_images)
@@ -162,8 +159,8 @@ def main():
     parser.add_argument('--output_dir', type=str, required=True, help='Directory to save results')
     parser.add_argument('--batch_size', type=int, default=32, help='Batch size for inference')
     parser.add_argument('--visualize', action='store_true', help='Visualize the predictions')
-    parser.add_argument('--model', type=str, default='hybrid', choices=['hybrid', 'combined'],
-                        help='Model type to use for inference (hybrid or combined)')
+    parser.add_argument('--model', type=str, default='combined', choices=['combined'],
+                        help='Model type to use for inference (combined model)')
     args = parser.parse_args()
 
     # Set device
@@ -171,20 +168,11 @@ def main():
     print(f"Using device: {device}")
 
     # Load trained model
-    print(f"Loading trained {args.model} model...")
-    if args.model == 'combined':
-        model = load_trained_combined_model()
-        if model is None:
-            print("Failed to load combined model. Trying to load hybrid model instead...")
-            model = load_trained_hybrid_model()
-    else:
-        model = load_trained_hybrid_model()
-        if model is None and args.model == 'hybrid':
-            print("Failed to load hybrid model. Trying to load combined model instead...")
-            model = load_trained_combined_model()
+    print(f"Loading trained combined model...")
+    model = load_trained_combined_model()
 
     if model is None:
-        print("Failed to load any model. Please train a model first.")
+        print("Failed to load combined model. Please train the model first.")
         return
 
     # Get image paths

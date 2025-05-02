@@ -24,8 +24,8 @@ class CombinedModel(nn.Module):
 
         # VAE parameters for KL annealing
         self.batch_size = batch_size
-        self.train_data_size = train_data_size
-        self.steps_per_epoch = self.train_data_size // self.batch_size
+        self.train_data_size = train_data_size #70,304
+        self.steps_per_epoch = self.train_data_size // self.batch_size #70304/32=2197
         self.current_epoch = 0
         self.current_iteration = 0
         self.annealing_epochs = KL_ANNEALING_EPOCHS  # Number of epochs to gradually increase KL weight
