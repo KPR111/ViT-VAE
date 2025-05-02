@@ -10,7 +10,7 @@ import argparse
 import time
 from torchvision import transforms
 
-from utils.model_utils import load_trained_hybrid_model, get_device
+from utils.model_utils import load_trained_hybrid_model, load_trained_combined_model, get_device
 from data.data_loader import get_class_mapping
 from config.model_config import IMAGE_SIZE
 
@@ -51,7 +51,11 @@ def predict_image(image_path, model, class_indices, device):
 
     # Forward pass
     with torch.no_grad():
-        outputs = model(img_tensor)
+        # Check if it's a combined model or hybrid model
+        if hasattr(model, 'decoder'):  # It's a combined model
+            _, outputs, _, _, _ = model(img_tensor)
+        else:  # It's a hybrid model
+            outputs = model(img_tensor)
 
     # Calculate inference time
     inference_time = time.time() - start_time
@@ -95,6 +99,8 @@ def main():
     parser.add_argument('--image', type=str, required=True, help='Path to the image file')
     parser.add_argument('--visualize', action='store_true', help='Visualize the prediction')
     parser.add_argument('--output', type=str, help='Path to save the visualization')
+    parser.add_argument('--model', type=str, default='hybrid', choices=['hybrid', 'combined'],
+                        help='Model type to use for inference (hybrid or combined)')
     args = parser.parse_args()
 
     # Set device
@@ -102,10 +108,20 @@ def main():
     print(f"Using device: {device}")
 
     # Load trained model
-    print("Loading trained model...")
-    hybrid_model = load_trained_hybrid_model()
-    if hybrid_model is None:
-        print("Failed to load hybrid model. Please train the model first.")
+    print(f"Loading trained {args.model} model...")
+    if args.model == 'combined':
+        model = load_trained_combined_model()
+        if model is None:
+            print("Failed to load combined model. Trying to load hybrid model instead...")
+            model = load_trained_hybrid_model()
+    else:
+        model = load_trained_hybrid_model()
+        if model is None and args.model == 'hybrid':
+            print("Failed to load hybrid model. Trying to load combined model instead...")
+            model = load_trained_combined_model()
+
+    if model is None:
+        print("Failed to load any model. Please train a model first.")
         return
 
     # Get class indices
@@ -114,7 +130,7 @@ def main():
     # Predict
     print(f"Predicting disease for image: {args.image}")
     predicted_class, confidence, img, inference_time = predict_image(
-        args.image, hybrid_model, class_indices, device
+        args.image, model, class_indices, device
     )
 
     if predicted_class is None:

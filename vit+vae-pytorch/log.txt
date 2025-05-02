@@ -1,4 +1,5 @@
 
+Seperately Traning
 VAE - Training
 Epoch 1/10 - Train Loss: 0.7768 (Recon: 0.7768, KL: 1.3537, W_KL: 0.0000), Val Loss: 0.5349 (Recon: 0.5349, KL: 2.1872, W_KL: 0.0000)
 Epoch 2/10 - Train Loss: 0.6707 (Recon: 0.6707, KL: 2.3096, W_KL: 0.0000), Val Loss: 0.5164 (Recon: 0.5164, KL: 2.6970, W_KL: 0.0001)
@@ -11,7 +12,7 @@ Epoch 8/10 - Train Loss: 0.6438 (Recon: 0.6435, KL: 3.8953, W_KL: 0.0003), Val L
 Epoch 9/10 - Train Loss: 0.6422 (Recon: 0.6419, KL: 3.7841, W_KL: 0.0003), Val Loss: 0.4980 (Recon: 0.4977, KL: 3.9434, W_KL: 0.0004)
 Epoch 10/10 - Train Loss: 0.6414 (Recon: 0.6410, KL: 3.6785, W_KL: 0.0003), Val Loss: 0.4981 (Recon: 0.4977, KL: 3.8617, W_KL: 0.0004)
 
-Hybrid - Training
+Hybrid - Training = First Training
 Epoch 1/10 - Train Loss: 3.6133, Train Acc: 6.74%, Val Loss: 3.5749, Val Acc: 10.87%
 Epoch 2/10 - Train Loss: 3.5696, Train Acc: 11.42%, Val Loss: 3.5514, Val Acc: 13.14%
 Epoch 3/10 - Train Loss: 3.5531, Train Acc: 13.20%, Val Loss: 3.5322, Val Acc: 15.62%
@@ -22,3 +23,30 @@ Epoch 7/10 - Train Loss: 3.5152, Train Acc: 17.35%, Val Loss: 3.4933, Val Acc: 1
 Epoch 8/10 - Train Loss: 3.5108, Train Acc: 17.73%, Val Loss: 3.4871, Val Acc: 20.64%
 Epoch 9/10 - Train Loss: 3.5073, Train Acc: 18.05%, Val Loss: 3.4861, Val Acc: 20.61%
 Epoch 10/10 - Train Loss: 3.5017, Train Acc: 18.62%, Val Loss: 3.4773, Val Acc: 21.37%
+
+
+
+
+Combined Training...
+
+Epoch 1/10 Summary:
+Train Loss: 3.9734, Recon: 0.7569, Class: 3.2164, KL: 1.0662, Weighted KL: 0.0000, Accuracy: 49.99%
+Val Loss: 3.5367, Recon: 0.5527, Class: 2.9840, KL: 1.5700, Weighted KL: 0.0000, Accuracy: 71.94%
+Epoch 2/10 Summary:
+Train Loss: 3.6313, Recon: 0.6894, Class: 2.9420, KL: 1.7966, Weighted KL: 0.0000, Accuracy: 76.72%
+Val Loss: 3.3913, Recon: 0.5404, Class: 2.8508, KL: 2.0126, Weighted KL: 0.0000, Accuracy: 84.50%
+Epoch 3/10 Summary:
+Train Loss: 3.5397, Recon: 0.6811, Class: 2.8586, KL: 2.2019, Weighted KL: 0.0001, Accuracy: 84.22%
+Val Loss: 3.3449, Recon: 0.5338, Class: 2.8111, KL: 2.4020, Weighted KL: 0.0001, Accuracy: 88.17%
+Epoch 4/10 Summary:
+Train Loss: 3.4936, Recon: 0.6751, Class: 2.8184, KL: 2.5037, Weighted KL: 0.0001, Accuracy: 87.83%
+Val Loss: 3.3088, Recon: 0.5299, Class: 2.7788, KL: 2.6988, Weighted KL: 0.0001, Accuracy: 91.21%
+Epoch 5/10 Summary:
+Train Loss: 3.4630, Recon: 0.6735, Class: 2.7894, KL: 2.7308, Weighted KL: 0.0001, Accuracy: 90.48%
+Val Loss: 3.2847, Recon: 0.5282, Class: 2.7563, KL: 2.8431, Weighted KL: 0.0001, Accuracy: 93.24%
+Epoch 6/10 Summary:
+Train Loss: 3.4427, Recon: 0.6714, Class: 2.7711, KL: 2.9231, Weighted KL: 0.0002, Accuracy: 92.03%
+Val Loss: 3.2681, Recon: 0.5252, Class: 2.7426, KL: 3.1263, Weighted KL: 0.0002, Accuracy: 94.41%
+Epoch 7/10 Summary:
+Train Loss: 3.4312, Recon: 0.6687, Class: 2.7623, KL: 3.0827, Weighted KL: 0.0002, Accuracy: 92.75%
+Val Loss: 3.2657, Recon: 0.5246, Class: 2.7409, KL: 3.2631, Weighted KL: 0.0002, Accuracy: 94.58%
