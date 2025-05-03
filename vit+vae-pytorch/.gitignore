@@ -67,3 +67,7 @@ tensorboard_logs/
 .Trashes
 ehthumbs.db
 Thumbs.db
+
+# Test results
+test_results*/
+Thumbs.db
