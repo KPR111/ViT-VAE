@@ -136,7 +136,7 @@ class Decoder(nn.Module):
         # Fully connected layer
         x = F.relu(self.bn_fc(self.fc(z)))
 
-        # Reshape to feature map
+        # Reshape to feature map -> Just Reorganizing
         x = x.view(x.size(0), self.initial_channels, self.initial_size[0], self.initial_size[1])
 
         # Transposed convolutional layers

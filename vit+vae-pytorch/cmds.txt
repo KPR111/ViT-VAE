@@ -1,0 +1,13 @@
+python main.py test --test_dir path/to/test/dataset --output_dir test_results
+cmd for testing....
+
+
+
+$env:KMP_DUPLICATE_LIB_OK="TRUE"
+
+python main.py inference --image path/to/image.jpg --visualize --model combined
+cmd for inference...
+
+
+to view tensorboard... ALL Graphs
+tensorboard --logdir="C:\Users\Prudvi\Desktop\GenAIProj\vit+vae-pytorch\checkpoints\hybrid\combined_logs"

@@ -58,6 +58,21 @@ def train_combined_model(epochs=HYBRID_EPOCHS, resume=False):
     # Move model to device
     combined_model = combined_model.to(device)
     
+    # Calculate and print parameter counts
+    def count_parameters(model):
+        return sum(p.numel() for p in model.parameters() if p.requires_grad)
+    
+    total_params = count_parameters(combined_model)
+    vae_params = count_parameters(encoder) + count_parameters(decoder)
+    vit_params = count_parameters(vit_classifier)
+    
+    print(f"\nModel Parameter Counts:")
+    print(f"Total parameters: {total_params:,}")
+    print(f"VAE parameters (encoder+decoder): {vae_params:,}")
+    print(f"ViT parameters: {vit_params:,}")
+    print(f"VAE percentage: {(vae_params/total_params)*100:.2f}%")
+    print(f"ViT percentage: {(vit_params/total_params)*100:.2f}%\n")
+    
     # Create optimizer for all parameters
     optimizer = optim.Adam(combined_model.parameters(), lr=LEARNING_RATE)
     
@@ -116,8 +131,10 @@ def train_combined_model(epochs=HYBRID_EPOCHS, resume=False):
             loss, recon_loss, class_loss, kl_loss, weighted_kl, kl_weight = combined_model.loss_function(
                 reconstructed, data, class_outputs, targets, mean, log_var
             )
-            # Backward pass and optimize
+            # Backward pass ( calculate gradients)
             loss.backward()
+            
+            # Update weights
             optimizer.step()
             
             # Update metrics

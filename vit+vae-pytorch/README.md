@@ -3,7 +3,7 @@
 ## Model Architecture Parameters
 
 ### VAE Model Parameters
-Total parameters: ~32.4 million
+Total parameters: 32,456,195
 - Encoder: ~25.85 million parameters
   - Conv1: 896 parameters
     - Calculation: (kernel_size² × in_channels × out_channels) + out_channels
@@ -20,35 +20,17 @@ Total parameters: ~32.4 million
     - Calculation: (256 × 256) + 256 = 65,792
 
 ### Vision Transformer (ViT) Parameters
-Total parameters: ~5.92 million
+Total parameters: 84,134
 - Initial Dense Layer: 65,792 parameters
   - Calculation: (LATENT_DIM × LATENT_DIM) + LATENT_DIM
   - (256 × 256) + 256 = 65,792
 
-- Transformer Blocks (×12): 3,947,520 parameters
-  - Per block (328,960 parameters):
-    - Multi-head Attention: 262,144 parameters
-      - Calculation: (3 × embed_dim × embed_dim) + (embed_dim × embed_dim)
-      - (3 × 256 × 256) + (256 × 256) = 262,144
-    - Layer Norms (2 per block): 1,024 parameters
-      - Calculation: 2 × (2 × embed_dim)
-      - 2 × (2 × 256) = 1,024
-    - MLP block: 65,792 parameters
-      - Calculation: (embed_dim × embed_dim) + embed_dim
-      - (256 × 256) + 256 = 65,792
-  - Total per transformer block: 328,960
-  - Total for 12 blocks: 12 × 328,960 = 3,947,520
-
-- Final Layer Norm: 512 parameters
-  - Calculation: 2 × PATCH_SIZE
-  - 2 × 256 = 512
-
-- Classification Head: 1,908,774 parameters
-  - Calculation: (NUM_PATCHES × PATCH_SIZE × NUM_CLASSES) + NUM_CLASSES
-  - (196 × 256 × 38) + 38 = 1,908,774
+- Classification Head: 18,342 parameters
+  - Calculation: (LATENT_DIM × NUM_CLASSES) + NUM_CLASSES
+  - (256 × 38) + 38 = 18,342
 
 ### Combined Model
-Total trainable parameters: ~38.3 million parameters
+Total trainable parameters: 32,540,329 parameters
 
 ### Notes on Parameter Calculations:
 - For convolutional layers: parameters = (kernel_size² × in_channels × out_channels) + out_channels
